@@ -1,8 +1,8 @@
 #ifndef COMMAND_PARSER_H   /* Include guard */
 #define COMMAND_PARSER_H
 
-/* 
-	- This function should be responsible for importing all details of the command 
+/*
+	- This function should be responsible for importing all details of the command
 	- Should specify the type of the command "comment, cd, echo, expression - X=5 -, else"
 	- Should specify the arguments of the command
 	- Should specify if the command is background or foreground
@@ -13,7 +13,7 @@
 	- Best practice is to use helper function for each collection of logical instructions,
 	  example: function for splitting the command by space into array of strings, ..etc
 */
-void parse_command( const char* command );  
+void parse_command( const char* command, char ** args );
 
-
+int count_split_strings(const char * message, const char delimiter);
 #endif // COMMAND_PARSER_H
