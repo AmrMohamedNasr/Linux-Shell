@@ -13,7 +13,8 @@
 	- Best practice is to use helper function for each collection of logical instructions,
 	  example: function for splitting the command by space into array of strings, ..etc
 */
-void parse_command( const char* command, char ** args );
+int parse_command( const char* command, char ** args, int * commandType, int * background);
 
-int count_split_strings(const char * message, const char delimiter);
+int execute_command( const char * command, char * const * args, const int * commandType, const int * background);
+
 #endif // COMMAND_PARSER_H

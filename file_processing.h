@@ -18,7 +18,7 @@ void close_log_file();
 /*
 	CommandsBatch file basic functions' prototypes
 */
-void open_commands_batch_file();
+void open_commands_batch_file(const char * file_dir);
 FILE* get_commands_batch_file();
 void close_commands_batch_file();
 
