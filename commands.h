@@ -2,6 +2,11 @@
 #define COMMANDS_H_
 
 /*
+	- This function should be responsible for implementing the "history" shell command
+*/
+void history( char* const* args );
+
+/*
 	- This function should be responsible for implementing the "cd" shell command
 */
 void cd( char* const* args );

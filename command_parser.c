@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <sys/wait.h>
+#include "string_operations.h"
 
 typedef enum{ exit_command = 0 , change_dir_command = 1, echo_command = 2, general_command = 3, variable_command = 4, history_command = 5, comment = 6 } command_type ;
 
@@ -31,6 +32,8 @@ int parse_command( const char* command, char ** args, int * commandType, int * b
         * commandType = change_dir_command;
     } else if (strcmp(args[0], "echo") == 0) {
         * commandType = echo_command;
+    } else if (strcmp(args[0], "history") == 0) {
+        * commandType = history_command;
     } else if (args[0][0] ==  '#')  {
         * commandType = comment;
     } else {
@@ -43,42 +46,72 @@ int parse_command( const char* command, char ** args, int * commandType, int * b
 int execute_command( const char * command, char * const* args, const int * commandType, const int * background) {
     if (*commandType == exit_command) {
         return 0;
+    } else if (*commandType == comment) {
+        return 1;
     }
     char * path = malloc(PATH_MAX * sizeof(char));
     int pid;
-    switch (* commandType) {
-        case change_dir_command:
-            cd(args);
-            break;
-        case echo_command:
-            echo(command, args);
-            break;
-        case general_command:
-            pid = fork();
-            if (pid < 0) {
-                perror("Fork failed ");
-            } else if (pid == 0) {
-                getCorrectPath(path, args[0]);
-                if (execv(path, args) == -1) {
-                    fprintf(stderr, "No matching command found...\n");
-                    exit(1);
-                }
-            } else {
-                if (* background == 0) {
+    if (*background == 0) {
+        switch (* commandType) {
+            case change_dir_command:
+                cd(args);
+                break;
+            case echo_command:
+                echo(command, args);
+                break;
+            case general_command:
+                pid = fork();
+                if (pid < 0) {
+                    perror("Fork failed ");
+                } else if (pid == 0) {
+                    getCorrectPath(path, args[0]);
+                    if (execv(path, args) == -1) {
+                        fprintf(stderr, "No matching command found...\n");
+                        exit(1);
+                    }
+                } else {
                     int status;
                     waitpid(pid, &status, 0);
                 }
+                break;
+            case history_command:
+                history(args);
+                break;
+            case variable_command:
+                break;
+            default:
+                fprintf(stderr, "Unknown command type....\n");
+                break;
+        }
+    } else {
+        pid = fork();
+        if (pid < 0) {
+            perror("Fork failed ");
+        } else if (pid == 0) {
+            switch (* commandType) {
+                case change_dir_command:
+                    cd(args);
+                    break;
+                case echo_command:
+                    echo(command, args);
+                    break;
+                case general_command:
+                    getCorrectPath(path, args[0]);
+                    if (execv(path, args) == -1) {
+                        fprintf(stderr, "No matching command found...\n");
+                    }
+                    break;
+                case history_command:
+                    history(args);
+                    break;
+                case variable_command:
+                    break;
+                default:
+                    fprintf(stderr, "Unknown command type....\n");
+                    break;
             }
-            break;
-        case history_command:
-            break;
-        case variable_command:
-            break;
-        case comment:
-            break;
-        default:
-            fprintf(stderr, "Unknown command type....\n");
-            break;
+            exit(0);
+        }
     }
     return 1;
 }
@@ -110,7 +143,7 @@ void getCorrectPath(char * path, const char * file) {
         } else if (file[0] == '/') {
             strcpy(path, file);
         } else {
-            char * token = strtok(paths,":");;
+            char * token = strtok(paths,":");
             while (access(path, F_OK ) == -1 && token != NULL) {
                 strcpy(path, token);
                 strcat(path, "/");
@@ -119,17 +152,4 @@ void getCorrectPath(char * path, const char * file) {
             }
         }
     }
-}
-
-int split_string(const char * message, char ** args, const char * delimiter) {
-    char * token;
-    char * copy = strdup(message);
-    token = strtok(copy, delimiter);
-    int i = 0;
-    while (token != NULL) {
-        strcpy(args[i], token);
-        token = strtok(NULL, delimiter);
-        i++;
-    }
-    return i;
 }

@@ -5,8 +5,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "history.h"
 
 static char previous_dir[PATH_MAX];
+
+void history( char * const* args) {
+    if (args[1] == NULL) {
+        print_history();
+    } else {
+        fprintf(stderr, "Invalid number of arguments for history command...\n");
+    }
+}
 
 void cd(  char* const* args )
 {

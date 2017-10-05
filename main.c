@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "shell_constants.h"
+#include "history.h"
+#include "signal_handler.h"
 
 typedef enum{ false = 0 , true = 1 } bool ;
 
@@ -17,8 +19,9 @@ int main(int argc, char *argv[], char** envp)
     setup_environment(envp);
 
     // any other early configuration should be here
-    open_history_file();
-    open_log_file();
+
+    intialize_history_table();
+    start_signal_handlers();
 
     if(argc > 2) {
         fprintf(stderr, "Invalid number of arguments. Command should be entered as <shell [batch file]>\n");
@@ -39,13 +42,13 @@ void start_shell(bool read_from_file)
 {
     const char *init_directory [3] = {"cd", "~", NULL};
 	cd((char * const *)init_directory);
-    shell_loop(read_from_file);
+	shell_loop(read_from_file);
 }
 
 void shell_loop(bool input_from_file)
 {
 	bool from_file = input_from_file;
-    char * input = malloc((MAX_COMMAND_LEN + 1) * sizeof(char));
+    char * input = malloc((MAX_COMMAND_LEN ) * sizeof(char));
 	char **args = malloc (sizeof (char *) * (MAX_COMMAND_LEN));
 	char * eofDetector = 0;
 	int * commandtype = malloc(sizeof(int));
@@ -61,7 +64,7 @@ void shell_loop(bool input_from_file)
 		if(from_file){
 			//read next instruction from file
 			fseek(get_commands_batch_file(), file_counter, SEEK_SET);
-            eofDetector = fgets(input, (MAX_COMMAND_LEN + 1), get_commands_batch_file());
+            eofDetector = fgets(input, (MAX_COMMAND_LEN), get_commands_batch_file());
             file_counter += strlen(input);
             // if end of file {from_file = false; continue;}
 			if (eofDetector == 0) {
@@ -88,14 +91,13 @@ void shell_loop(bool input_from_file)
 		// execute your command here
 
 		if (nulled_index != 0) {
+            add_to_history(input);
             working = execute_command(input, ( char * const*)args, commandtype, background);
         }
         // reallocating the nulled index element in the args list.
         args[nulled_index] = malloc(sizeof(char) * MAX_COMMAND_LEN);
 	}
 	printf("\n");
-	close_history_file();
-	close_log_file();
 	free(input);
 	i = 0;
 	for (i = 0; i < MAX_COMMAND_LEN; i++) {
@@ -107,4 +109,6 @@ void shell_loop(bool input_from_file)
     free(commandtype);
     free(args);
     clear_variable_table();
+    clear_history_table();
+    stop_signal_handlers();
 }

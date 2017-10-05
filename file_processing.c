@@ -87,7 +87,6 @@ void open_commands_batch_file(const char * file_dir)
 	} else {
         strcpy(path, file_dir);
 	}
-	printf("%s\n", path);
 	// + to keep sure it is not a directory.
 	files[BATCH_INDEX] = fopen(path, "r+");
     if (files[BATCH_INDEX] == NULL) {
