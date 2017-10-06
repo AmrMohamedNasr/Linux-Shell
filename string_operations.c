@@ -1,7 +1,6 @@
 #include "string_operations.h"
 #include <string.h>
-
-int isSpace(const char c);
+#include "shell_constants.h"
 
 int split_string(const char * message, char ** args, const char * delimiter) {
     char * token;
@@ -22,6 +21,12 @@ void remove_leading_spaces(const char * message, char * output) {
         i++;
     }
     strcpy(output, message + i);
+}
+
+void cat_string(int start, int end, char * destination, const char * source) {
+    char * temp = strdup(source);
+    temp[end] = '\0';
+    strcat(destination, temp + start);
 }
 
 void reverse_string(char * string) {

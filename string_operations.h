@@ -7,4 +7,8 @@ void remove_leading_spaces(const char * message, char * output);
 
 void reverse_string(char * string);
 
+void cat_string(int start, int end, char * destination, const char * source);
+
+int isSpace(const char c);
+
 #endif // STRING_OPERATIONS_H_INCLUDED

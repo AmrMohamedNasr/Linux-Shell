@@ -15,6 +15,6 @@
 */
 int parse_command( const char* command, char ** args, int * commandType, int * background);
 
-int execute_command( const char * command, char * const * args, const int * commandType, const int * background);
+int execute_command( char * const * args, const int * commandType, const int * background);
 
 #endif // COMMAND_PARSER_H

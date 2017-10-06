@@ -15,6 +15,6 @@ void cd( char* const* args );
 	- This function should be responsible for implementing the "echo" shell command
 	- Typically should lookup any variable included in the message
 */
-void echo( const char * command,  char* const* args );
+void echo( char* const* args );
 
 #endif // COMMANDS_H_

@@ -17,7 +17,7 @@ void start_signal_handlers() {
 }
 
 void catch_sigchld(int signo) {
-    wait(NULL);
+    waitpid(-1, NULL, WNOHANG);
     fprintf(get_log_file(), "Child process was terminated\n");
     fflush(get_log_file());
 }

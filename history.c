@@ -46,6 +46,7 @@ void add_to_history(char * command) {
             add_to_history_table(lead_trim_command);
             fputc('\n', get_history_file());
         }
+        fflush(get_history_file());
     } else {
         if (strcmp(history_table[cur_history_size - 1], lead_trim_command) != 0) {
             if (fputs(lead_trim_command, get_history_file()) == EOF) {
@@ -54,6 +55,7 @@ void add_to_history(char * command) {
                 add_to_history_table(lead_trim_command);
                 fputc('\n', get_history_file());
             }
+            fflush(get_history_file());
         }
     }
     free(lead_trim_command);

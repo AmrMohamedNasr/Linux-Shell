@@ -90,12 +90,16 @@ void shell_loop(bool input_from_file)
         int nulled_index = parse_command(input, args, commandtype, background);
 		// execute your command here
 
-		if (nulled_index != 0) {
+		if (nulled_index > 0) {
             add_to_history(input);
-            working = execute_command(input, ( char * const*)args, commandtype, background);
+            working = execute_command(( char * const*)args, commandtype, background);
+        } else if (nulled_index < 0) {
+            fprintf(stderr, "Invalid use of quotes.. please enter a valid command\n");
         }
         // reallocating the nulled index element in the args list.
-        args[nulled_index] = malloc(sizeof(char) * MAX_COMMAND_LEN);
+        if (nulled_index > -1) {
+            args[nulled_index] = malloc(sizeof(char) * MAX_COMMAND_LEN);
+        }
 	}
 	printf("\n");
 	free(input);
