@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include "history.h"
 #include "shell_constants.h"
-
+#include <wordexp.h>
 
 /**
     - Get the path of the home from the home variable.
@@ -50,7 +50,7 @@ void cd(  char* const* args )
         // Go to home directory if no arguments are given.
         go_home(path, args);
         if (chdir(path) < 0) {
-            perror("cd error :");
+            perror("cd error ");
         } else {
             strcpy(previous_dir, cwd);
         }
@@ -60,21 +60,7 @@ void cd(  char* const* args )
     } else {
         // Check for the suitable directory.
         // If directory is ~ or ~/path
-        if (args[1][0] == '~' && (args[1][1] =='/' || args[1][1] =='\0')) {
-            go_home(path, args);
-        // If directory is ~username
-        } else if (args[1][0] == '~') {
-            int i = 1;
-            strcpy(path, "/home/");
-            int size = strlen(path);
-            while (args[1][i] != '\0') {
-                path[size] = args[1][i];
-                size++;
-                i++;
-            }
-            path[size] = '\0';
-        // if directory is - and only - then swap directories.
-        } else if (args[1][0] == '-' && args[1][1] == '\0') {
+        if (args[1][0] == '-' && args[1][1] == '\0') {
             if (previous_dir[0] != '\0') {
                 strcpy(path, previous_dir);
                 printf("%s\n", path);
@@ -85,7 +71,7 @@ void cd(  char* const* args )
         }
         // Change to the intended directory.
         if (chdir(path) < 0) {
-            perror("cd error :");
+            perror("cd error ");
         } else {
             strcpy(previous_dir, cwd);
         }
@@ -115,18 +101,17 @@ void go_home(char * path, char * const * args) {
 }
 // Implementation (Documented in headers).
 void export_var( char* const* args ) {
-    int i = 1;
     char temp[STRING_MAX_SIZE];
-    while (args[i] != NULL) {
-        char * equal_at = strchr(args[i], '=');
+    if (args[2] == NULL) {
+        char * equal_at = strchr(args[1], '=');
         if (equal_at == NULL) {
-            if (valid_shell_name(args[i])) {
-                const char * result = lookup_variable(args[i], temp);
+            if (valid_shell_name(args[1])) {
+                const char * result = lookup_variable(args[1], temp);
                 if (result == NULL) {
-                    add_local_variable(args[i], "");
-                    setenv(args[i], "", 1);
+                    add_local_variable(args[1], "");
+                    setenv(args[1], "", 1);
                 } else {
-                     setenv(args[i], temp, 1);
+                     setenv(args[1], temp, 1);
                 }
             } else {
                 fprintf(stderr, "EXPORT : error : Invalid variable name.. Should follow format[a-zA-Z_]+[a-zA-Z_0-9]*\n");
@@ -134,14 +119,15 @@ void export_var( char* const* args ) {
         } else {
             strcpy(temp, equal_at + 1);
             * equal_at = '\0';
-            if (valid_shell_name(args[i])) {
-                add_local_variable(args[i], temp);
-                setenv(args[i], temp, 1);
+            if (valid_shell_name(args[1])) {
+                add_local_variable(args[1], temp);
+                setenv(args[1], temp, 1);
             } else {
                 fprintf(stderr, "EXPORT : error : Invalid variable name.. Should follow format[a-zA-Z_]+[a-zA-Z_0-9]*\n");
             }
         }
-        i++;
+    } else {
+        fprintf(stderr, "EXPORT : error : Only supports exporting one variable at a time\n");
     }
 }
 // Implementation (Documented in headers).

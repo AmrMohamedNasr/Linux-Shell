@@ -10,6 +10,8 @@
 #include <limits.h>
 #include <sys/wait.h>
 #include "string_operations.h"
+#include <ctype.h>
+#include <pwd.h>
 
 // Command types.
 typedef enum{ exit_command = 0 , change_dir_command = 1, echo_command = 2, general_command = 3, variable_command = 4, history_command = 5, comment = 6, export_command = 7 } command_type ;
@@ -43,6 +45,16 @@ int split_string_to_args(const char * command, char * const * args);
     - The command string to process.
 **/
 void replace_variables(char * output, const char * command);
+/**
+    - Parses assignments correctly.
+    @command
+    - The command to parse.
+    @args
+    - The arguments parsed.
+    @export_flag
+    - 1 if it is an export flag, 0 if not.
+**/
+void variable_parser(const char * command, char ** args, int export_flag);
 
 // Implementation (Documented in headers).
 int parse_command( const char* command, char ** args, int * commandType, int * background) {
@@ -73,6 +85,9 @@ int parse_command( const char* command, char ** args, int * commandType, int * b
     } else if (strcmp(args[0], "history") == 0) {
         * commandType = history_command;
     } else if (strcmp(args[0], "export") == 0) {
+        if (argsLen > 1) {
+            variable_parser(command, args, 1);
+        }
         * commandType = export_command;
     } else if (args[0][0] ==  '#')  {
         * commandType = comment;
@@ -81,6 +96,8 @@ int parse_command( const char* command, char ** args, int * commandType, int * b
         if (argsLen == 1) {
             char * equal_start = strchr(args[0], '=');
             if (equal_start != NULL) {
+                variable_parser(command, args, 0);
+                equal_start = strchr(args[0], '=');
                 strcpy(args[argsLen], equal_start + 1);
                 (* equal_start) = '\0';
                 argsLen++;
@@ -255,10 +272,11 @@ void replace_variables(char * output, const char * command) {
     int cur_i = 0;
     char * temp_buffer = malloc(STRING_MAX_SIZE * sizeof(char));
     char * temp_value = malloc(STRING_MAX_SIZE * sizeof(char));
+    int mode = 0;
     // Loop over command.
     while (command[i] != '\0') {
         // If a variable start, replace the variable with the result.
-        if (command[i] == '$' && valid_shell_char(command[i + 1], 1) == 1) {
+        if (command[i] == '$' && valid_shell_char(command[i + 1], 1) == 1 && mode != 2) {
             i++;
             // Get all variable name in temp_buffer.
             int buf_index = 0;
@@ -277,9 +295,51 @@ void replace_variables(char * output, const char * command) {
                 strcat(output, temp_value);
                 cur_i = strlen(output) - 1;
             }
-        }
+        // Tilde expansion.
+        } else if (command[i] == '~' && (i == 0 || isSpace(command[i - 1])) && mode == 0) {
+            i++;
+            // check if it ~username.
+            // If it is, replace it with the dir found in /etc/passwd
+            if (isalpha(command[i])) {
+                int buf_index = 0;
+                while (isalpha(command[i])) {
+                    temp_buffer[buf_index] = command[i];
+                    buf_index++;
+                    i++;
+                }
+                temp_buffer[buf_index] = '\0';
+                struct passwd * data = getpwnam(temp_buffer);
+                if (data == NULL) {
+                    output[cur_i] = '~';
+                    cur_i++;
+                    output[cur_i] = '\0';
+                    strcat(output, temp_buffer);
+                    cur_i = strlen(output) - 1;
+                } else {
+                    output[cur_i] = '\0';
+                    strcat(output, data->pw_dir);
+                    cur_i = strlen(output) - 1;
+                }
+            // Else replace it with home variable.
+            } else {
+                const char * result = lookup_variable("HOME", temp_value);
+                if (result == 0) {
+                    fprintf(stderr, "ERROR : cd error : no home variable found...\n");
+                } else {
+                    output[cur_i] = '\0';
+                    strcat(output, temp_value);
+                    cur_i = strlen(output) - 1;
+                }
+            }
+            i--;
+        } else if (command[i] == '"' && mode != 2) {
+            mode = mode == 1 ? 0 : 1;
+            output[cur_i] = command[i];
+        } else if (command[i] == '\'' && mode != 1) {
+            mode = mode == 2 ? 0 : 2;
+            output[cur_i] = command[i];
         // Else add the character.
-        else {
+        } else {
             output[cur_i] = command[i];
         }
         i++;
@@ -349,4 +409,44 @@ int split_string_to_args(const char * command, char * const * args) {
         return -1;
     }
     return argsLen;
+}
+// Implementation (Documented above prototype).
+void variable_parser(const char * command, char ** args, int export_flag) {
+    int i = 0;
+    int arg_i = 0;
+    int cur_i = 0;
+    char temp[STRING_MAX_SIZE];
+    // If export, set starting points differently.
+    if (export_flag == 1) {
+        while (isSpace(command[i])) {
+            i++;
+        }
+        i = strchr(command + i, ' ') - command;
+        arg_i = 1;
+    }
+    // Pass leading spaces.
+    while (isSpace(command[i])) {
+        i++;
+    }
+    // Get the processed value for the key.
+    char * processed_key_value = strchr(args[arg_i], '=');
+    // Check for processed value and copy it if it is there.
+    if (processed_key_value == NULL) {
+        temp[cur_i] = '\0';
+    } else {
+        // Copy original key.
+        while (command[i] != '=' && command[i] != '\0') {
+            temp[cur_i] = command[i];
+            i++;
+            cur_i++;
+        }
+        while (*processed_key_value != '\0') {
+            temp[cur_i] = *processed_key_value;
+            processed_key_value++;
+            cur_i++;
+        }
+        temp[cur_i] = '\0';
+        // Copy the result to the arguments.
+        strcpy(args[arg_i], temp);
+    }
 }

@@ -1,3 +1,5 @@
+# Final program directory
+TARGET_DIR = ./bin
 # Final program name
 TARGET = Shell
 # Header files directory
@@ -19,7 +21,9 @@ IHCF = -I $(HEADER_DIR)
 # Check each object file we have.
 # If its equivalent .c file changed or any of the header file changed
 # Reproduce the object file.
-$(OBJECT_DIR)/%.o: %.c $(HEADERS)
+$(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.c $(HEADERS)
+	# make directory if it isn't available.
+	-mkdir -p $(OBJECT_DIR)
 	# $@ left side of condition, $< first operand of the right side
 	$(COMPILER) -c -o $@ $< $(ICHF)
 # Tell make to not delete these files as we need them even though objects are
@@ -27,7 +31,10 @@ $(OBJECT_DIR)/%.o: %.c $(HEADERS)
 .PRECIOUS: $(TARGET) $(OBJECTS)
 # Check for any change in object, if there is a change reproduce the target file.
 $(TARGET): $(OBJECTS)
-	$(COMPILER) -o $@ $^ $(ICHF)
+	# Make directory if it isn't available.
+	-mkdir -p $(TARGET_DIR)
+	# Compile the final program.
+	$(COMPILER) -o $(TARGET_DIR)/$@ $^ $(ICHF)
 # Add option to make, if option entered it will do the suitable action.
 .PHONY: clean
 # Delete all generated files by make.

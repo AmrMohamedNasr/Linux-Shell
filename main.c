@@ -77,7 +77,7 @@ int main(int argc, char *argv[], char** envp)
 void start_shell(bool read_from_file)
 {
     // Move shell to home.
-    const char *init_directory [3] = {"cd", "~", NULL};
+    const char *init_directory [2] = {"cd",NULL};
 	cd((char * const *)init_directory);
 	// start shell loop.
 	shell_loop(read_from_file);
