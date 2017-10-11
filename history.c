@@ -54,7 +54,7 @@ void clear_history_table(void) {
 // Implementation (Documentation in headers).
 void add_to_history(char * command) {
     // Trim the command to add to the history.
-    char * lead_trim_command = malloc(MAX_COMMAND_LEN * sizeof(char));
+    char * lead_trim_command = malloc((MAX_COMMAND_LEN + 1) * sizeof(char));
     remove_leading_spaces(command, lead_trim_command);
     // Go to the end of file.
     fseek(get_history_file(), 0, SEEK_END);
@@ -86,11 +86,11 @@ void add_to_history(char * command) {
 }
 // Implementation (Documentation above prototype).
 void read_all_history(void) {
-    char * temp = malloc(MAX_COMMAND_LEN * sizeof(char));
+    char * temp = malloc(STRING_MAX_SIZE * sizeof(char));
     // Go the start of the history file.
     fseek(get_history_file(), 0, SEEK_SET);
     // Loop untill you reach the end of file.
-    while (fgets(temp, MAX_COMMAND_LEN, get_history_file())) {
+    while (fgets(temp, STRING_MAX_SIZE, get_history_file())) {
         // Add commands to the table after removing the \n sepeartors used in the file.
         if (temp[strlen(temp) - 1] == '\n') {
             temp[strlen(temp) - 1] = '\0';

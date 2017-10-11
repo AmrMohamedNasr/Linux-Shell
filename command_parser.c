@@ -35,13 +35,22 @@ void getCorrectPath(char * path, const char * file);
     - The number of arguments.
 **/
 int split_string_to_args(const char * command, char * const * args);
+/**
+    - Processes the command and replaces any variable with its value if suitable.
+    @output
+    - The result string of the processing to be saved in this char.
+    @command
+    - The command string to process.
+**/
+void replace_variables(char * output, const char * command);
 
 // Implementation (Documented in headers).
 int parse_command( const char* command, char ** args, int * commandType, int * background) {
     // Split the command to arguments.
     int argsLen = split_string_to_args(command, args);
     // If lower than 0, then there is a problem.
-    if (argsLen < 0) {
+    // If 0 then an empty line.
+    if (argsLen <= 0) {
         return argsLen;
     }
     // Check if its a background operation.
@@ -125,7 +134,9 @@ int execute_command( char * const* args, const int * commandType, const int * ba
                 } else {
                     int status;
                     // Wait for child, foreground operation...
-                    waitpid(pid, &status, 0);
+                    do{
+                        waitpid(pid, &status, WUNTRACED);
+                    } while ( !WIFEXITED(status) && !WIFSIGNALED(status) );
                 }
                 break;
             case history_command:
@@ -238,7 +249,7 @@ void getCorrectPath(char * path, const char * file) {
     }
     free(paths);
 }
-
+// Implementation (Documented above prototype).
 void replace_variables(char * output, const char * command) {
     int i = 0;
     int cur_i = 0;
@@ -278,10 +289,11 @@ void replace_variables(char * output, const char * command) {
     free(temp_buffer);
     free(temp_value);
 }
-// Implementation (DOcumented above prototype).
+// Implementation (Documented above prototype).
 int split_string_to_args(const char * command, char * const * args) {
     char * no_var_copy = malloc(STRING_MAX_SIZE * 4 * sizeof(char));
     char * copy = malloc(STRING_MAX_SIZE* 4 * sizeof(char));
+    // replace all variables with their values.
     replace_variables(no_var_copy, command);
     // remove command leading spaces.
     remove_leading_spaces(no_var_copy, copy);

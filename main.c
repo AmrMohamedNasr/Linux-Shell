@@ -8,6 +8,7 @@
 #include "shell_constants.h"
 #include "history.h"
 #include "signal_handler.h"
+#include "string_operations.h"
 
 // Enum for true and false.
 typedef enum{ false = 0 , true = 1 } bool ;
@@ -86,7 +87,8 @@ void shell_loop(bool input_from_file)
 {
     // Allocate resources that will be used.
 	bool from_file = input_from_file;
-    char * input = malloc((MAX_COMMAND_LEN ) * sizeof(char));
+    char * input = malloc((MAX_COMMAND_LEN + 1) * sizeof(char));
+    int input_size = MAX_COMMAND_LEN + 1;
 	char **args = malloc (sizeof (char *) * (MAX_COMMAND_LEN));
 	char * eofDetector = 0;
 	int * commandtype = malloc(sizeof(int));
@@ -94,7 +96,7 @@ void shell_loop(bool input_from_file)
 	int i = 0;
     int working = 1;
     for (i = 0; i < MAX_COMMAND_LEN; i++) {
-        args[i] = malloc(sizeof(char) * MAX_COMMAND_LEN);
+        args[i] = malloc(sizeof(char) * STRING_MAX_SIZE);
     }
     int file_counter = 0;
     // Working loop.
@@ -105,7 +107,7 @@ void shell_loop(bool input_from_file)
 		if(from_file){
 			//read next instruction from file
 			fseek(get_commands_batch_file(), file_counter, SEEK_SET);
-            eofDetector = fgets(input, (MAX_COMMAND_LEN), get_commands_batch_file());
+            eofDetector = read_line(&input, &input_size, get_commands_batch_file());
             file_counter += strlen(input);
             // if end of file {from_file = false; continue;}
 			if (eofDetector == 0) {
@@ -121,7 +123,7 @@ void shell_loop(bool input_from_file)
 		}
 		else {
 			//read next instruction from console
-			eofDetector = fgets(input, (MAX_COMMAND_LEN + 1), stdin);
+            eofDetector = read_line(&input, &input_size, stdin);
             if (eofDetector == 0) {
                 // ctrl + D is entered.
                 break;
@@ -131,21 +133,25 @@ void shell_loop(bool input_from_file)
 		if (input[strlen(input) - 1] == '\n') {
             input[strlen(input) - 1] = '\0';
 		}
-		// parse your command here
-        int nulled_index = parse_command(input, args, commandtype, background);
-        // The nulled_index also represents the number of arguments.
-		if (nulled_index > 0) {
-            // Tell history to add command.
-            add_to_history(input);
-            // execute your command here and update if we should continue the loop.
-            working = execute_command(( char * const*)args, commandtype, background);
-        } else if (nulled_index < 0) {
-            // Quotes error.
-            fprintf(stderr, "Invalid use of quotes.. please enter a valid command\n");
-        }
-        // reallocating the nulled index element in the args list.
-        if (nulled_index > -1) {
-            args[nulled_index] = malloc(sizeof(char) * MAX_COMMAND_LEN);
+		if (strlen(input) > MAX_COMMAND_LEN) {
+            fprintf(stderr, "ERROR : input above specified size.\n");
+		} else if (strlen(input) > 0) {
+            // parse your command here
+            int nulled_index = parse_command(input, args, commandtype, background);
+            // The nulled_index also represents the number of arguments.
+            if (nulled_index > 0) {
+                // Tell history to add command.
+                add_to_history(input);
+                // execute your command here and update if we should continue the loop.
+                working = execute_command(( char * const*)args, commandtype, background);
+            } else if (nulled_index < 0) {
+                // Quotes error.
+                fprintf(stderr, "Invalid use of quotes.. please enter a valid command\n");
+            }
+            // reallocating the nulled index element in the args list.
+            if (nulled_index > -1) {
+                args[nulled_index] = malloc(sizeof(char) * STRING_MAX_SIZE);
+            }
         }
 	}
 	printf("\n");

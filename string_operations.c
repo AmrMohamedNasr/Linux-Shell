@@ -48,3 +48,30 @@ void reverse_string(char * string) {
 int isSpace(const char c) {
     return (c == '\n' || c == ' ' || c == '\t' || c == '\r' || c == '\f' || c == '\v') ? 1 : 0;
 }
+// Implementation (documentation in headers).
+char * read_line(char ** output, int * size, FILE * source) {
+    int i = 0;
+    char c = fgetc(source);
+    if (c == EOF) {
+        return NULL;
+    }
+    while (c != EOF && c != '\n') {
+        (*output)[i] = c;
+        c = fgetc(source);
+        i++;
+        if (i == *size) {
+            *size *= 2;
+            *output = realloc(*output, *size * sizeof(char));
+        }
+    }
+    if (c != EOF) {
+        (*output)[i] = c;
+        i++;
+        if (i == *size) {
+            *size *= 2;
+            *output = realloc(*output, *size * sizeof(char));
+        }
+    }
+    (*output)[i] = '\0';
+    return *output;
+}
