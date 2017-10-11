@@ -114,6 +114,10 @@ void shell_loop(bool input_from_file)
                 close_commands_batch_file();
                 continue;
 			} else {
+                // Remove new line from the end of input.
+                if (input[strlen(input) - 1] == '\n') {
+                    input[strlen(input) - 1] = '\0';
+                }
                 // print read command.
                 printf("Shell > %s\n", input);
 			}
