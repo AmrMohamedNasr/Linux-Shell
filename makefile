@@ -3,11 +3,11 @@ TARGET_DIR = ./bin
 # Final program name
 TARGET = Shell
 # Header files directory
-HEADER_DIR = .
+HEADER_DIR = ./include
 # Header files
 HEADERS = $(wildcard $(HEADER_DIR)/*.h)
 # Source files directory
-SOURCE_DIR = .
+SOURCE_DIR = ./src
 # Source files
 SOURCES  = $(wildcard $(SOURCE_DIR)/*.c))
 # Object files directory
