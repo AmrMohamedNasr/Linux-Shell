@@ -294,6 +294,8 @@ void replace_variables(char * output, const char * command) {
                 output[cur_i] = '\0';
                 strcat(output, temp_value);
                 cur_i = strlen(output) - 1;
+            } else {
+                cur_i--;
             }
         // Tilde expansion.
         } else if (command[i] == '~' && (i == 0 || isSpace(command[i - 1])) && mode == 0) {
