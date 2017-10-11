@@ -6,11 +6,27 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "history.h"
+#include "shell_constants.h"
 
+
+/**
+    - Get the path of the home from the home variable.
+    @path
+    - Variable that will store the path in.
+    @args
+    - The arguments passed to the command.
+**/
 void go_home(char * path, char * const * args);
 
+
+// Array of valid characters to start the variable and to be in the variable name generally.
+static const char shell_variable_start_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+// Characters that can be part of the variables but not start them.
+static const char shell_variable_chars[] = "0123456789";
+// Previous directory.
 static char previous_dir[PATH_MAX];
 
+// Implementation (Documented in headers).
 void history( char * const* args) {
     if (args[1] == NULL) {
         // If number of arguments is right, print history.
@@ -20,7 +36,7 @@ void history( char * const* args) {
         fprintf(stderr, "Invalid number of arguments for history command...\n");
     }
 }
-
+// Implementation (Documented in headers).
 void cd(  char* const* args )
 {
     // Get current working directory.
@@ -77,14 +93,16 @@ void cd(  char* const* args )
     // Release resources.
     free(path);
 }
-
+// Implementation (Documented in prototype).
 void go_home(char * path, char * const * args) {
+    // Get home value.
     const char * result = lookup_variable("HOME", path);
     if (result == 0) {
         fprintf(stderr, "ERROR : cd error : no home variable found...\n");
     } else {
         int i = 1;
         int size = strlen(path);
+        // connect the rest of the path to the home directory.
         if (args[1] != NULL) {
             while (args[1][i] != '\0') {
                 path[size] = args[1][i];
@@ -95,8 +113,50 @@ void go_home(char * path, char * const * args) {
         path[size] = '\0';
     }
 }
+// Implementation (Documented in headers).
+void export_var( char* const* args ) {
+    int i = 1;
+    char temp[STRING_MAX_SIZE];
+    while (args[i] != NULL) {
+        char * equal_at = strchr(args[i], '=');
+        if (equal_at == NULL) {
+            if (valid_shell_name(args[i])) {
+                const char * result = lookup_variable(args[i], temp);
+                if (result == NULL) {
+                    add_local_variable(args[i], "");
+                    setenv(args[i], "", 1);
+                } else {
+                     setenv(args[i], temp, 1);
+                }
+            } else {
+                fprintf(stderr, "EXPORT : error : Invalid variable name.. Should follow format[a-zA-Z_]+[a-zA-Z_0-9]*\n");
+            }
+        } else {
+            strcpy(temp, equal_at + 1);
+            * equal_at = '\0';
+            if (valid_shell_name(args[i])) {
+                add_local_variable(args[i], temp);
+                setenv(args[i], temp, 1);
+            } else {
+                fprintf(stderr, "EXPORT : error : Invalid variable name.. Should follow format[a-zA-Z_]+[a-zA-Z_0-9]*\n");
+            }
+        }
+        i++;
+    }
+}
+// Implementation (Documented in headers).
+int add_local_variable( char * key, char * value) {
+    if (valid_shell_name(key) == 1) {
+        set_variable(key, value);
+        return 1;
+    } else {
+        return 0;
+    }
+}
+// Implementation (Documented in headers).
 void echo( char* const* args )
 {
+    // Loop over the arguments and print them with spaces between them.
     int i = 1;
     if (args[i] != NULL) {
         printf("%s", args[i]);
@@ -107,4 +167,39 @@ void echo( char* const* args )
         i++;
 	}
 	printf("\n");
+}
+// Implementation (Documented in headers).
+int valid_shell_name(const char * variable) {
+    int i = 0;
+    if (valid_shell_char(variable[i], 1) == 0) {
+        return 0;
+    }
+    i = 1;
+    while (variable[i] != '\0') {
+        if (valid_shell_char(variable[i], 0) == 0) {
+            return 0;
+        }
+        i++;
+    }
+    return 1;
+}
+// Implementation (Documented in headers).
+int valid_shell_char(const char c, int start) {
+    int i = 0;
+    while (shell_variable_start_chars[i] != '\0') {
+        if (shell_variable_start_chars[i] == c) {
+            return 1;
+        }
+        i++;
+    }
+    if (start == 0) {
+        i = 0;
+        while (shell_variable_chars[i] != '\0') {
+            if (shell_variable_chars[i] == c) {
+                return 1;
+            }
+            i++;
+        }
+    }
+    return 0;
 }
