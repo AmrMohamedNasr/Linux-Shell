@@ -6,7 +6,8 @@
 // Implementation (documentation in headers).
 int split_string(const char * message, char ** args, const char * delimiter) {
     char * token;
-    char * copy = strdup(message);
+    char copy[STRING_MAX_SIZE];
+    strcpy(copy, message);
     token = strtok(copy, delimiter);
     int i = 0;
     while (token != NULL) {
@@ -14,7 +15,6 @@ int split_string(const char * message, char ** args, const char * delimiter) {
         token = strtok(NULL, delimiter);
         i++;
     }
-    free(copy);
     return i;
 }
 // Implementation (documentation in headers).
@@ -27,10 +27,13 @@ void remove_leading_spaces(const char * message, char * output) {
 }
 // Implementation (documentation in headers).
 void cat_string(int start, int end, char * destination, const char * source) {
-    char * temp = strdup(source);
+    if (end < 0 || end > STRING_MAX_SIZE) {
+        return;
+    }
+    char temp[STRING_MAX_SIZE];
+    strcpy(temp, source);
     temp[end] = '\0';
     strcat(destination, temp + start);
-    free(temp);
 }
 // Implementation (documentation in headers).
 void reverse_string(char * string) {

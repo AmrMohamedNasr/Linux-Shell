@@ -101,8 +101,6 @@ void shell_loop(bool input_from_file)
     int file_counter = 0;
     // Working loop.
     while(working == 1) {
-        // Print Shell head.
-		printf("Shell > ");
 		// Check mode.
 		if(from_file){
 			//read next instruction from file
@@ -114,14 +112,15 @@ void shell_loop(bool input_from_file)
                 from_file = false;
                 // Close batch file as we finished reading from it.
                 close_commands_batch_file();
-                printf("\n");
                 continue;
 			} else {
                 // print read command.
-                printf("%s\n", input);
+                printf("Shell > %s\n", input);
 			}
 		}
 		else {
+            // Print Shell head.
+            printf("Shell > ");
 			//read next instruction from console
             eofDetector = read_line(&input, &input_size, stdin);
             if (eofDetector == 0) {
