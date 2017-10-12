@@ -46,8 +46,8 @@ $(TARGET): $(OBJECTS)
 .PHONY: clean
 # Delete all generated files by make.
 clean:
-	-rm -f $(OBJECTS)
-	-rm -f $(TARGET_DIR)/$(TARGET)
+	-rm -rf $(OBJECT_DIR)
+	-rm -rf $(TARGET_DIR)
 
 # C code make file made by Amr Nasr.
 
