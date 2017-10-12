@@ -442,12 +442,31 @@ void variable_parser(const char * command, char ** args, int export_flag) {
             i++;
             cur_i++;
         }
-        while (*processed_key_value != '\0') {
-            temp[cur_i] = *processed_key_value;
-            processed_key_value++;
-            cur_i++;
+		// Put the = between key and value.
+        temp[cur_i] = command[i];
+        i++;
+        cur_i++;
+        // Allocate temp args to reparse the value.
+        char ** temp_args_buffer = malloc(MAX_COMMAND_LEN * sizeof(char *));
+        int temp_i = 0;
+        for (temp_i = 0; temp_i < MAX_COMMAND_LEN; temp_i++) {
+        	temp_args_buffer[temp_i] = malloc(STRING_MAX_SIZE * sizeof(char));
+        }
+        // Parse the value.
+       	int size_args = split_string_to_args(command + i, (char * const *) temp_args_buffer);
+        // Add parsed value to the string.
+        if (size_args > 0) {
+        	temp[cur_i] = '\0';
+        	strcat(temp, temp_args_buffer[0]);
+        	cur_i = strlen(temp);
         }
         temp[cur_i] = '\0';
+        // Free taken resources.
+        temp_i = 0;
+        for (temp_i = 0; temp_i < MAX_COMMAND_LEN; temp_i++) {
+        	free(temp_args_buffer[temp_i]);
+        }
+        free(temp_args_buffer);
         // Copy the result to the arguments.
         strcpy(args[arg_i], temp);
     }
